@@ -1,0 +1,36 @@
+## Mahjong seatings Rust library
+
+Small library to calculate seatings for mahjong or any other game for 4 persons.
+
+For WebAssembly sources and builds, see the [repo](https://github.com/MahjongPantheon/mahjong-seating-rs) and npm
+packages for [node](https://npmjs.com/package/mahjong-seating-rs-node)
+and [bundlers](https://npmjs.com/package/mahjong-seating-rs-bundlers).
+
+### Build
+
+```rust
+cargo build - - release
+```
+
+### Usage
+
+Install the library by adding the following in your Cargo.toml:
+
+```toml
+[dependencies]
+# write last version from https://github.com/MahjongPantheon/mahjong-seating-rust/blob/main/Cargo.toml
+riichi-rust = { git = "https://github.com/MahjongPantheon/mahjong-seating-rust.git", version = "1.0.0" } 
+```
+
+Use the library:
+
+// TODO
+
+```rust
+
+```
+
+### Credits
+
+Swiss seating algorithm is taken from [mahjongsoft site](http://mahjongsoft.ru/seating.shtml) and ported to several
+languages including Rust.

@@ -1,0 +1,15 @@
+[package]
+name = "mahjong-seatings-rust"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.219", features = ["derive"] }
+lcg-rand = { version = "1.0.0" }
+
+[profile.release]
+opt-level = "z"
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
