@@ -54,8 +54,7 @@ pub fn make_shuffled_seating(
     }
 
     for i in 0..MAX_ITERATIONS {
-        let mut random: LCG = LCG::new();
-        random.seed = rand_factor + (i as u64) * 17;
+        let mut random: LCG = LCG::from_seed(rand_factor + (i as u64) * 17);
 
         // Shuffle each group
         for group in &mut groups {
@@ -207,4 +206,219 @@ fn calc_sub_sums(
     }
 
     total_sum
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calc_sub_sums() {}
+
+    #[test]
+    fn test_update_places_at_each_table() {}
+
+    #[test]
+    fn test_calculate_intersection_factor() {}
+
+    #[test]
+    fn test_make_shuffled_seating_initial() {
+        let players = vec![
+            (1, 1500),
+            (2, 1500),
+            (3, 1500),
+            (4, 1500),
+            (5, 1500),
+            (6, 1500),
+            (7, 1500),
+            (8, 1500),
+            (9, 1500),
+            (10, 1500),
+            (11, 1500),
+            (12, 1500),
+        ];
+
+        let seating = make_shuffled_seating(&players, &vec![], 1, 3464752).unwrap();
+        assert_eq!(seating.len(), 12);
+        assert_eq!(
+            seating,
+            vec![
+                (1, 1500),
+                (6, 1500),
+                (3, 1500),
+                (4, 1500),
+                (5, 1500),
+                (10, 1500),
+                (11, 1500),
+                (12, 1500),
+                (9, 1500),
+                (2, 1500),
+                (7, 1500),
+                (8, 1500)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_make_shuffled_seating_after_first_game() {
+        let players = vec![
+            (1, 1500),
+            (2, 1500),
+            (3, 1500),
+            (4, 1500),
+            (5, 1500),
+            (6, 1500),
+            (7, 1500),
+            (8, 1500),
+            (9, 1500),
+            (10, 1500),
+            (11, 1500),
+            (12, 1500),
+            (13, 1500),
+            (14, 1500),
+            (15, 1500),
+            (16, 1500),
+        ];
+
+        let previous_seating: Vec<Vec<u32>> = vec![
+            vec![1, 2, 3, 4],
+            vec![5, 6, 7, 8],
+            vec![9, 10, 11, 12],
+            vec![13, 14, 15, 16],
+        ];
+
+        let seating = make_shuffled_seating(&players, &previous_seating, 1, 3464752).unwrap();
+        assert_eq!(seating.len(), 16);
+        assert_eq!(
+            seating,
+            vec![
+                (4, 1500),
+                (1, 1500),
+                (2, 1500),
+                (3, 1500),
+                (8, 1500),
+                (5, 1500),
+                (6, 1500),
+                (7, 1500),
+                (12, 1500),
+                (9, 1500),
+                (10, 1500),
+                (11, 1500),
+                (16, 1500),
+                (13, 1500),
+                (14, 1500),
+                (15, 1500)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_make_shuffled_seating_after_several_games() {
+        let players = vec![
+            (1, 1500),
+            (2, 1500),
+            (3, 1500),
+            (4, 1500),
+            (5, 1500),
+            (6, 1500),
+            (7, 1500),
+            (8, 1500),
+            (9, 1500),
+            (10, 1500),
+            (11, 1500),
+            (12, 1500),
+            (13, 1500),
+            (14, 1500),
+            (15, 1500),
+            (16, 1500),
+        ];
+
+        let previous_seating: Vec<Vec<u32>> = vec![
+            vec![1, 2, 3, 4],
+            vec![5, 6, 7, 8],
+            vec![9, 10, 11, 12],
+            vec![13, 14, 15, 16],
+            vec![1, 5, 9, 13],
+            vec![2, 6, 10, 14],
+            vec![3, 7, 11, 15],
+            vec![4, 8, 12, 16],
+        ];
+
+        let seating = make_shuffled_seating(&players, &previous_seating, 1, 9486370).unwrap();
+        assert_eq!(seating.len(), 16);
+        assert_eq!(
+            seating,
+            vec![
+                (10, 1500),
+                (3, 1500),
+                (4, 1500),
+                (1, 1500),
+                (7, 1500),
+                (5, 1500),
+                (14, 1500),
+                (2, 1500),
+                (11, 1500),
+                (9, 1500),
+                (8, 1500),
+                (6, 1500),
+                (12, 1500),
+                (15, 1500),
+                (13, 1500),
+                (16, 1500)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_make_shuffled_seating_grouped() {
+        let players = vec![
+            (1, 1508),
+            (2, 1507),
+            (3, 1506),
+            (4, 1505),
+            (5, 1504),
+            (6, 1503),
+            (7, 1502),
+            (8, 1501),
+            (9, 1500),
+            (10, 1499),
+            (11, 1498),
+            (12, 1498),
+            (13, 1497),
+            (14, 1496),
+            (15, 1495),
+            (16, 1494),
+        ];
+
+        let previous_seating: Vec<Vec<u32>> = vec![
+            vec![1, 2, 3, 4],
+            vec![5, 6, 7, 8],
+            vec![9, 10, 11, 12],
+            vec![13, 14, 15, 16],
+        ];
+
+        let seating = make_shuffled_seating(&players, &previous_seating, 2, 3464752).unwrap();
+        assert_eq!(seating.len(), 16);
+        assert_eq!(
+            seating,
+            vec![
+                (4, 1505),
+                (1, 1508),
+                (2, 1507),
+                (3, 1506),
+                (8, 1501),
+                (5, 1504),
+                (6, 1503),
+                (7, 1502),
+                (16, 1494),
+                (9, 1500),
+                (10, 1499),
+                (14, 1496),
+                (12, 1498),
+                (11, 1498),
+                (13, 1497),
+                (15, 1495)
+            ]
+        );
+    }
 }

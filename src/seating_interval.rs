@@ -64,5 +64,5 @@ pub fn make_interval_seating(
         flattened_groups.extend(table.players);
     }
 
-    update_places_to_random(&flattened_groups, rand_factor).unwrap_or_default()
+    update_places_to_random(&flattened_groups, rand_factor)
 }

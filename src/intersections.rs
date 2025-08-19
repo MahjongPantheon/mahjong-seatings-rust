@@ -33,3 +33,69 @@ pub fn make_intersections_table(
 
     intersection_data.iter().map(|x| (*x).clone()).collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_make_intersection_table() {
+        let players_map = vec![
+            (1, 1500),
+            (2, 1500),
+            (3, 1500),
+            (4, 1500),
+            (5, 1500),
+            (6, 1500),
+            (7, 1500),
+            (8, 1500),
+            (9, 1500),
+            (10, 1500),
+            (11, 1500),
+            (12, 1500),
+            (13, 1500),
+            (14, 1500),
+            (15, 1500),
+            (16, 1500),
+        ];
+
+        let previous_seating: Vec<Vec<u32>> = vec![
+            vec![1, 2, 3, 4],
+            vec![5, 6, 7, 8],
+            vec![9, 10, 11, 12],
+            vec![13, 14, 15, 16],
+        ];
+
+        let expected = vec![
+            (1, 2, 2),
+            (1, 3, 2),
+            (1, 4, 2),
+            (2, 3, 2),
+            (2, 4, 2),
+            (3, 4, 2),
+            (5, 6, 2),
+            (5, 7, 2),
+            (5, 8, 2),
+            (6, 7, 2),
+            (6, 8, 2),
+            (7, 8, 2),
+            (9, 10, 2),
+            (9, 11, 2),
+            (9, 12, 2),
+            (10, 11, 2),
+            (10, 12, 2),
+            (11, 12, 2),
+            (13, 14, 2),
+            (13, 15, 2),
+            (13, 16, 2),
+            (14, 15, 2),
+            (14, 16, 2),
+            (15, 16, 2),
+        ];
+
+        assert_eq!(
+            expected,
+            make_intersections_table(&players_map, &previous_seating)
+        );
+    }
+}
