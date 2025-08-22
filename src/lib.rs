@@ -4,6 +4,7 @@ mod interfaces;
 mod intersections;
 mod matrix;
 mod minimap;
+mod primes;
 mod seating_interval;
 mod seating_shuffle;
 mod seating_swiss;

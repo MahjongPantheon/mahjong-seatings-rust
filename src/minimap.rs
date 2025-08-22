@@ -1,44 +1,59 @@
+use crate::primes::get_closest_prime;
+
 pub struct Minimap<T> {
-    elements: Vec<T>,
-    id_to_index_map: Vec<u32>,
+    factor: usize,
+    elements: Vec<(u32, Option<T>)>,
 }
 
 impl<T: Clone> Minimap<T> {
-    pub fn new(ids: &Vec<u32>, fill: T) -> Minimap<T> {
-        let mut map = ids.clone();
-        // need to sort to use binary search
-        map.sort_by(|a, b| a.cmp(b));
+    pub fn new(size: usize) -> Minimap<T> {
+        let prime = get_closest_prime(size as u32);
         Minimap {
-            elements: vec![fill; ids.len()],
-            id_to_index_map: map,
+            factor: prime,
+            elements: vec![(0, None); prime * 2],
         }
     }
 
-    fn get_index(&self, id: u32) -> Option<usize> {
-        match self.id_to_index_map.binary_search(&id) {
-            Ok(i) => Some(i),
-            Err(_) => None,
-        }
+    fn get_index(&self, id: u32) -> usize {
+        (id % self.factor as u32) as usize
     }
 
-    pub fn get_value(&self, id: u32) -> Option<&T> {
-        let index = self.get_index(id);
-        if let Some(i) = index {
-            Some(&self.elements[i])
-        } else {
-            None
+    pub fn get_value(&self, id: u32) -> Option<T> {
+        let mut index = self.get_index(id);
+
+        loop {
+            if index >= self.elements.len() {
+                return None;
+            }
+            if self.elements[index].0 == id {
+                return Some(self.elements[index].1.clone().unwrap());
+            }
+            index += 1;
         }
     }
 
     pub fn set_value(&mut self, id: u32, value: T) {
-        let index = self.get_index(id);
-        if let Some(i) = index {
-            self.elements[i] = value;
+        let mut index = self.get_index(id);
+        loop {
+            if index >= self.elements.len() {
+                return;
+            }
+            if self.elements[index].0 == 0 || self.elements[index].0 == id {
+                self.elements[index] = (id, Some(value));
+                return;
+            }
+            index += 1;
         }
     }
 
-    pub fn iter(&self) -> std::slice::Iter<T> {
-        self.elements.iter()
+    pub fn all(&self, cb: fn(v: &T) -> bool) -> bool {
+        self.elements.iter().all(|x| {
+            if x.1.is_none() {
+                return true;
+            } else {
+                cb(&x.1.clone().unwrap())
+            }
+        })
     }
 
     pub fn fill_with(&mut self, value: &Vec<(u32, T)>) {
@@ -54,17 +69,18 @@ mod tests {
 
     #[test]
     fn test_create_minimap() {
-        let matrix = Minimap::new(&vec![567, 345, 123], 2);
-        assert_eq!(matrix.get_value(123), Some(&2));
-        assert_eq!(matrix.get_value(123), Some(&2));
+        let mut minimap = Minimap::new(3);
+        minimap.fill_with(&vec![(123, 2), (567, 2)]);
+        assert_eq!(minimap.get_value(123), Some(2));
+        assert_eq!(minimap.get_value(567), Some(2));
     }
 
     #[test]
     fn test_set_value() {
-        let mut matrix = Minimap::new(&vec![567, 345, 123], 2);
-        matrix.set_value(123, 3);
-        assert_eq!(matrix.get_value(123), Some(&3));
-        matrix.set_value(567, 4);
-        assert_eq!(matrix.get_value(567), Some(&4));
+        let mut minimap = Minimap::new(3);
+        minimap.set_value(123, 3);
+        assert_eq!(minimap.get_value(123), Some(3));
+        minimap.set_value(567, 4);
+        assert_eq!(minimap.get_value(567), Some(4));
     }
 }

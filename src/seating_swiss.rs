@@ -10,9 +10,9 @@ pub fn make_swiss_seating(
     previous_seatings: &Vec<Vec<u32>>,
     rand_factor: u64,
 ) -> PlayersMap {
-    let ids = players_map.iter().map(|item| item.0).collect();
+    let ids: Vec<u32> = players_map.iter().map(|item| item.0).collect();
     let mut played_with = make_played_with_matrix(players_map, previous_seatings);
-    let mut player_to_rating: Minimap<i32> = Minimap::new(&ids, 0);
+    let mut player_to_rating: Minimap<i32> = Minimap::new(ids.len());
     players_map.iter().for_each(|item| {
         player_to_rating.set_value(item.0, item.1);
     });
@@ -20,12 +20,12 @@ pub fn make_swiss_seating(
 
     let mut result_table: Vec<(u32, i32)> = Vec::new();
     for i in ids {
-        result_table.push((i, *player_table.get_value(i).unwrap()));
+        result_table.push((i, player_table.get_value(i).unwrap()));
     }
     result_table.sort_by(|a, b| a.1.cmp(&b.1));
     result_table = result_table
         .iter()
-        .map(|item| (item.0, *player_to_rating.get_value(item.0).unwrap()))
+        .map(|item| (item.0, player_to_rating.get_value(item.0).unwrap()))
         .collect();
 
     update_places_to_random(&result_table, rand_factor)
@@ -40,10 +40,10 @@ fn swiss_seating_original(
     played_with: &mut Matrix<u32>,
 ) -> Minimap<i32> {
     let num_players = players_ratings.len();
-    let mut player_table = Minimap::new(ids, 0);
-    let mut is_playing = Minimap::new(ids, false);
+    let mut player_table = Minimap::new(ids.len());
+    let mut is_playing = Minimap::new(ids.len());
     let mut max_crossings = 0;
-    let mut players_ratings_map = Minimap::new(ids, 0);
+    let mut players_ratings_map = Minimap::new(ids.len());
     players_ratings.iter().for_each(|item| {
         players_ratings_map.set_value(item.0, item.1);
         is_playing.set_value(item.0, false);
@@ -87,7 +87,7 @@ fn swiss_seating_internal(
     }
 
     // Check if everybody has taken a seat
-    if is_playing.iter().all(|playing| *playing) {
+    if is_playing.all(|playing| *playing) {
         return true;
     }
 
@@ -228,11 +228,11 @@ fn find_highest_table_and_players(ids: &Vec<u32>, player_table: &Minimap<i32>) -
     let mut max_table = 0;
     let mut players_on_max_table = Vec::new();
     for i in ids {
-        if *player_table.get_value(*i).unwrap() > max_table {
-            max_table = *player_table.get_value(*i).unwrap();
+        if player_table.get_value(*i).unwrap() > max_table {
+            max_table = player_table.get_value(*i).unwrap();
             players_on_max_table.clear();
         }
-        if *player_table.get_value(*i).unwrap() == max_table {
+        if player_table.get_value(*i).unwrap() == max_table {
             players_on_max_table.push(*i);
         }
     }
@@ -248,8 +248,8 @@ fn sort_by_rating(next_players: &mut Vec<u32>, players_ratings: &Minimap<i32>) {
             continue;
         }
         for j in i + 1..next_players.len() {
-            if *players_ratings.get_value(next_players[i]).unwrap()
-                < *players_ratings.get_value(next_players[j]).unwrap()
+            if players_ratings.get_value(next_players[i]).unwrap()
+                < players_ratings.get_value(next_players[j]).unwrap()
             {
                 next_players.swap(i, j);
             }
@@ -266,11 +266,11 @@ fn find_player_with_highest_rating(
     let mut max_id = 0u32;
 
     for i in ids {
-        if *is_playing.get_value(*i).unwrap() {
+        if is_playing.get_value(*i).unwrap() {
             continue;
         }
-        if *players_ratings.get_value(*i).unwrap() > max_gp {
-            max_gp = *players_ratings.get_value(*i).unwrap();
+        if players_ratings.get_value(*i).unwrap() > max_gp {
+            max_gp = players_ratings.get_value(*i).unwrap();
             max_id = *i;
         }
     }
@@ -352,7 +352,7 @@ mod tests {
     #[test]
     fn test_find_highest_table_and_players() {
         let ids = vec![1, 2, 3, 4, 5, 6, 7, 8];
-        let mut player_table = Minimap::new(&ids, 0);
+        let mut player_table = Minimap::new(ids.len());
         player_table.fill_with(&vec![
             (1, 1),
             (2, 1),
@@ -371,7 +371,7 @@ mod tests {
     #[test]
     fn test_sort_by_rating() {
         let mut players = vec![1, 2, 3, 4, 5, 6, 7, 8];
-        let mut players_ratings = Minimap::new(&players, 0);
+        let mut players_ratings = Minimap::new(players.len());
         players_ratings.fill_with(&vec![
             (1, -1200),
             (2, 9200),
@@ -389,9 +389,9 @@ mod tests {
     #[test]
     fn test_find_player_with_highest_rating() {
         let ids = vec![1, 2, 3, 4];
-        let mut is_playing = Minimap::new(&ids, false);
+        let mut is_playing = Minimap::new(ids.len());
         is_playing.fill_with(&vec![(1, false), (2, true), (3, false), (4, false)]);
-        let mut players_ratings = Minimap::new(&ids, 0);
+        let mut players_ratings = Minimap::new(ids.len());
         players_ratings.fill_with(&vec![(1, -1200), (2, 9200), (3, -13700), (4, 4400)]);
         let player = find_player_with_highest_rating(&ids, &is_playing, &players_ratings);
         assert_eq!(player, 4); // top player who is not playing
@@ -400,7 +400,7 @@ mod tests {
     #[test]
     fn test_set_table_for_player() {
         let ids = vec![1, 2, 3, 4, 5, 6, 7, 8];
-        let mut is_playing = Minimap::new(&ids, false);
+        let mut is_playing = Minimap::new(ids.len());
         is_playing.fill_with(&vec![
             (1, false),
             (2, false),
@@ -430,7 +430,7 @@ mod tests {
 
         let mut played_with = make_played_with_matrix(&players_map, &previous_seatings);
 
-        let mut player_table = Minimap::new(&ids, 0);
+        let mut player_table = Minimap::new(ids.len());
         player_table.fill_with(&vec![
             (1, 1),
             (2, 1),
@@ -452,8 +452,8 @@ mod tests {
             &vec![5, 6, 7, 8],
         );
 
-        assert_eq!(*is_playing.get_value(5).unwrap(), true);
-        assert_eq!(*player_table.get_value(5).unwrap(), 4);
+        assert_eq!(is_playing.get_value(5).unwrap(), true);
+        assert_eq!(player_table.get_value(5).unwrap(), 4);
         assert_eq!(*played_with.get_value(5, 6).unwrap(), 2);
 
         set_table_for_player(
@@ -466,8 +466,8 @@ mod tests {
             &vec![5, 6, 7, 8],
         );
 
-        assert_eq!(*is_playing.get_value(5).unwrap(), false);
-        assert_eq!(*player_table.get_value(5).unwrap(), -1);
+        assert_eq!(is_playing.get_value(5).unwrap(), false);
+        assert_eq!(player_table.get_value(5).unwrap(), -1);
         assert_eq!(*played_with.get_value(5, 6).unwrap(), 1);
     }
 
