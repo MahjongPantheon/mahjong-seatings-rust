@@ -134,8 +134,9 @@ fn swiss_seating_internal(
                 if !is_playing.get_value(*i).unwrap() {
                     let mut num_crossings = 0;
                     for j in 0..players_on_max_table.len() {
-                        num_crossings +=
-                            played_with.get_value(*i, players_on_max_table[j]).unwrap();
+                        num_crossings += played_with
+                            .get_value(*i, players_on_max_table[j])
+                            .unwrap_or(0);
                     }
                     if num_crossings <= cur_crossings {
                         next_players.push(*i);
@@ -202,7 +203,7 @@ fn make_played_with_matrix(
     previous_seatings: &Vec<Vec<u32>>,
 ) -> Matrix<u32> {
     let ids: Vec<u32> = players_map.iter().map(|item| item.0).collect();
-    let mut played_with = Matrix::new(&ids, 0);
+    let mut played_with = Matrix::new(ids.len());
 
     // Count previous games played together
     for table in previous_seatings {
@@ -214,7 +215,7 @@ fn make_played_with_matrix(
                 played_with.set_value(
                     table[i],
                     table[j],
-                    1 + played_with.get_value(table[i], table[j]).unwrap(),
+                    1 + played_with.get_value(table[i], table[j]).unwrap_or(0),
                 );
             }
         }
@@ -296,11 +297,11 @@ fn set_table_for_player(
                 players_on_max_table[j],
                 played_with
                     .get_value(player, players_on_max_table[j])
-                    .unwrap()
+                    .unwrap_or(0)
                     + 1,
             )
         } else {
-            let cur = *played_with
+            let cur = played_with
                 .get_value(player, players_on_max_table[j])
                 .unwrap();
             played_with.set_value(
@@ -339,14 +340,14 @@ mod tests {
 
         let played_with = make_played_with_matrix(&players_map, &previous_seatings);
 
-        assert_eq!(*played_with.get_value(1, 2).unwrap(), 1);
-        assert_eq!(*played_with.get_value(1, 3).unwrap(), 2);
-        assert_eq!(*played_with.get_value(2, 3).unwrap(), 1);
-        assert_eq!(*played_with.get_value(2, 4).unwrap(), 2);
-        assert_eq!(*played_with.get_value(2, 1).unwrap(), 1);
-        assert_eq!(*played_with.get_value(3, 1).unwrap(), 2);
-        assert_eq!(*played_with.get_value(3, 2).unwrap(), 1);
-        assert_eq!(*played_with.get_value(4, 2).unwrap(), 2);
+        assert_eq!(played_with.get_value(1, 2).unwrap(), 1);
+        assert_eq!(played_with.get_value(1, 3).unwrap(), 2);
+        assert_eq!(played_with.get_value(2, 3).unwrap(), 1);
+        assert_eq!(played_with.get_value(2, 4).unwrap(), 2);
+        assert_eq!(played_with.get_value(2, 1).unwrap(), 1);
+        assert_eq!(played_with.get_value(3, 1).unwrap(), 2);
+        assert_eq!(played_with.get_value(3, 2).unwrap(), 1);
+        assert_eq!(played_with.get_value(4, 2).unwrap(), 2);
     }
 
     #[test]
@@ -454,7 +455,7 @@ mod tests {
 
         assert_eq!(is_playing.get_value(5).unwrap(), true);
         assert_eq!(player_table.get_value(5).unwrap(), 4);
-        assert_eq!(*played_with.get_value(5, 6).unwrap(), 2);
+        assert_eq!(played_with.get_value(5, 6).unwrap(), 2);
 
         set_table_for_player(
             &mut is_playing,
@@ -468,7 +469,7 @@ mod tests {
 
         assert_eq!(is_playing.get_value(5).unwrap(), false);
         assert_eq!(player_table.get_value(5).unwrap(), -1);
-        assert_eq!(*played_with.get_value(5, 6).unwrap(), 1);
+        assert_eq!(played_with.get_value(5, 6).unwrap(), 1);
     }
 
     #[test]
@@ -545,6 +546,8 @@ mod tests {
             vec![21, 12, 20, 7],
             vec![3, 32, 8, 19],
             vec![16, 5, 10, 23],
+            // TODO: какой-то комбинаторный взрыв на пятой сессии, почему? Ошибка в логике?
+
             // // session 5
             // vec![26, 17, 6, 1],
             // vec![25, 13, 31, 20],
