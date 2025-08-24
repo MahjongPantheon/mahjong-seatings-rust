@@ -36,13 +36,13 @@ pub fn make_shuffled_seating(
     previous_seatings: &Vec<Vec<u32>>,
     groups_count: u32,
     rand_factor: u64,
-) -> Option<PlayersMap> {
+) -> PlayersMap {
     const MAX_ITERATIONS: usize = 1000;
     let mut best_seating = Vec::new();
     let mut factor = 100500; // lower is better, so init with very big number
 
     if players_map.is_empty() {
-        return Some(Vec::new());
+        return Vec::new();
     }
 
     // Split into groups
@@ -79,7 +79,7 @@ pub fn make_shuffled_seating(
 fn update_places_at_each_table(
     seating: &PlayersMap,
     previous_seatings: &Vec<Vec<u32>>,
-) -> Option<PlayersMap> {
+) -> PlayersMap {
     let mut tables = Vec::new();
     for chunk in seating.chunks(4) {
         tables.push(chunk.to_vec());
@@ -113,7 +113,7 @@ fn update_places_at_each_table(
         result_seating.extend(best_placement);
     }
 
-    Some(result_seating)
+    result_seating
 }
 
 /// Calculate generalized value of seating applicability.
@@ -238,7 +238,7 @@ mod tests {
             (12, 1500),
         ];
 
-        let seating = make_shuffled_seating(&players, &vec![], 1, 3464752).unwrap();
+        let seating = make_shuffled_seating(&players, &vec![], 1, 3464752);
         assert_eq!(seating.len(), 12);
         assert_eq!(
             seating,
@@ -287,7 +287,7 @@ mod tests {
             vec![13, 14, 15, 16],
         ];
 
-        let seating = make_shuffled_seating(&players, &previous_seating, 1, 3464752).unwrap();
+        let seating = make_shuffled_seating(&players, &previous_seating, 1, 3464752);
         assert_eq!(seating.len(), 16);
         assert_eq!(
             seating,
@@ -344,7 +344,7 @@ mod tests {
             vec![4, 8, 12, 16],
         ];
 
-        let seating = make_shuffled_seating(&players, &previous_seating, 1, 9486370).unwrap();
+        let seating = make_shuffled_seating(&players, &previous_seating, 1, 9486370);
         assert_eq!(seating.len(), 16);
         assert_eq!(
             seating,
@@ -397,7 +397,7 @@ mod tests {
             vec![13, 14, 15, 16],
         ];
 
-        let seating = make_shuffled_seating(&players, &previous_seating, 2, 3464752).unwrap();
+        let seating = make_shuffled_seating(&players, &previous_seating, 2, 3464752);
         assert_eq!(seating.len(), 16);
         assert_eq!(
             seating,
