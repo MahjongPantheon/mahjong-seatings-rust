@@ -39,7 +39,6 @@ fn swiss_seating_original(
     ids: &Vec<u32>,
     played_with: &mut Matrix<u32>,
 ) -> Minimap<i32> {
-    let num_players = players_ratings.len();
     let mut player_table = Minimap::new(ids.len());
     let mut is_playing = Minimap::new(ids.len());
     let mut max_crossings = 0;
@@ -50,16 +49,17 @@ fn swiss_seating_original(
         player_table.set_value(item.0, -1);
     });
 
+    let mut iteration = 0;
+    let mut crossings_precision_factor = 0;
     while !swiss_seating_internal(
         ids,
-        &mut is_playing,
         max_crossings,
-        0,
-        num_players as u32,
-        &mut player_table,
         &players_ratings_map,
+        &mut is_playing,
+        &mut crossings_precision_factor,
+        &mut player_table,
         played_with,
-        0,
+        &mut iteration,
     ) {
         max_crossings += 1;
     }
@@ -71,19 +71,18 @@ fn swiss_seating_original(
 /// Taken from mahjongsoft.ru
 fn swiss_seating_internal(
     ids: &Vec<u32>,
-    is_playing: &mut Minimap<bool>, // player_id -> is playing
     max_crossings: u32,
-    mut max_crossings_precision_factor: u32,
-    num_players: u32,
-    player_table: &mut Minimap<i32>,
     players_ratings: &Minimap<i32>, // player_id -> rating
+    is_playing: &mut Minimap<bool>, // player_id -> is playing
+    max_crossings_precision_factor: &mut u32,
+    player_table: &mut Minimap<i32>,
     played_with: &mut Matrix<u32>,
-    mut iteration: u32,
+    iteration: &mut u32,
 ) -> bool {
-    iteration += 1;
-    if iteration > 15000 {
-        max_crossings_precision_factor += 1;
-        iteration = 0;
+    *iteration += 1;
+    if *iteration > 15000 {
+        *max_crossings_precision_factor += 1;
+        *iteration = 0;
     }
 
     // Check if everybody has taken a seat
@@ -109,12 +108,11 @@ fn swiss_seating_internal(
 
         if swiss_seating_internal(
             ids,
-            is_playing,
-            max_crossings + max_crossings_precision_factor,
-            max_crossings_precision_factor,
-            num_players,
-            player_table,
+            max_crossings + *max_crossings_precision_factor,
             players_ratings,
+            is_playing,
+            max_crossings_precision_factor,
+            player_table,
             played_with,
             iteration,
         ) {
@@ -146,7 +144,7 @@ fn swiss_seating_internal(
 
             if next_players.len() > 0 {
                 break;
-            } else if cur_crossings == max_crossings + max_crossings_precision_factor {
+            } else if cur_crossings == max_crossings + *max_crossings_precision_factor {
                 return false;
             } else {
                 cur_crossings += 1;
@@ -171,12 +169,11 @@ fn swiss_seating_internal(
             // return success if we found a seating, or falling back otherwise
             if swiss_seating_internal(
                 ids,
-                is_playing,
-                max_crossings + max_crossings_precision_factor - cur_crossings,
-                max_crossings_precision_factor,
-                num_players,
-                player_table,
+                max_crossings + *max_crossings_precision_factor - cur_crossings,
                 players_ratings,
+                is_playing,
+                max_crossings_precision_factor,
+                player_table,
                 played_with,
                 iteration,
             ) {
@@ -546,27 +543,24 @@ mod tests {
             vec![21, 12, 20, 7],
             vec![3, 32, 8, 19],
             vec![16, 5, 10, 23],
-            // TODO: какой-то комбинаторный взрыв на пятой сессии, почему? Ошибка в логике?
-
-            // // session 5
-            // vec![26, 17, 6, 1],
-            // vec![25, 13, 31, 20],
-            // vec![4, 14, 28, 21],
-            // vec![29, 11, 5, 24],
-            // vec![2, 18, 9, 8],
-            // vec![23, 12, 3, 30],
-            // vec![16, 19, 7, 22],
-            // vec![32, 15, 27, 10],
+            // session 5
+            vec![26, 17, 6, 1],
+            vec![25, 13, 31, 20],
+            vec![4, 14, 28, 21],
+            vec![29, 11, 5, 24],
+            vec![2, 18, 9, 8],
+            vec![23, 12, 3, 30],
+            vec![16, 19, 7, 22],
+            vec![32, 15, 27, 10],
             // session 6
-            /*[26, 20, 11, 4],
-            [31, 21, 1, 18],
-            [28, 30, 16, 9],
-            [12, 25, 32, 6],
-            [29, 8, 23, 15],
-            [24, 19, 13, 10],
-            [3, 5, 22, 14],
-            [2, 17, 7, 27],*/
-
+            vec![26, 20, 11, 4],
+            vec![31, 21, 1, 18],
+            vec![28, 30, 16, 9],
+            vec![12, 25, 32, 6],
+            vec![29, 8, 23, 15],
+            vec![24, 19, 13, 10],
+            vec![3, 5, 22, 14],
+            vec![2, 17, 7, 27],
             // session 7
             /*[11, 26, 8, 21],
             [30, 4, 31, 6],
