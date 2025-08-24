@@ -10,7 +10,7 @@ checksum = "20ca4c746dc692bb7ea79d351bcfdce139f77bd24b5d65b9dbaa94f2d6b6fe71"
 
 [[package]]
 name = "mahjong-seatings-rust"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "lcg-rand",
  "serde",
