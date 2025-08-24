@@ -19,8 +19,10 @@ Install the library by adding the following in your Cargo.toml:
 ```toml
 [dependencies]
 # write last version from https://github.com/MahjongPantheon/mahjong-seating-rust/blob/main/Cargo.toml
-mahjong-seatings-rust = { git = "https://github.com/MahjongPantheon/mahjong-seatings-rust.git", version = "1.0.3" } 
+mahjong-seatings-rust = { git = "https://github.com/MahjongPantheon/mahjong-seatings-rust.git", version = "1.0.2" } 
 ```
+
+For details about usage, refer to unit tests in corresponding files.
 
 ### Credits
 
