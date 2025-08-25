@@ -27,7 +27,7 @@ pub fn shuffle(array: &[(u32, i32)], random: &mut LCG) -> Vec<(u32, i32)> {
 
     while i > 1 {
         i -= 1;
-        let j = random.next() as usize % array.len();
+        let j = random.next() as usize % i;
         if i != j {
             result.swap(i, j);
         }
@@ -56,9 +56,9 @@ mod tests {
 
     #[test]
     fn test_shuffle() {
-        let mut random = LCG::from_seed(1278);
+        let mut random = LCG::from_seed(1260);
         let array = vec![(1, 1), (2, 2), (3, 3), (4, 4)];
         let result = shuffle(&array, &mut random);
-        assert_eq!(result, vec![(3, 3), (2, 2), (1, 1), (4, 4)]);
+        assert_eq!(result, vec![(2, 2), (4, 4), (1, 1), (3, 3)]);
     }
 }
