@@ -18,11 +18,14 @@ pub fn make_interval_seating(
     let players_possible_to_seat_with_interval =
         current_rating_list.len() - players_to_seat_with_no_interval;
 
+    let mut sorted_rating_list = current_rating_list.clone();
+    sorted_rating_list.sort_by(|a, b| b.1.cmp(&a.1));
+
     // Fill tables with interval of $step
     for offset in 0..step {
         let mut i = offset;
         while i < players_possible_to_seat_with_interval {
-            current_table.push(current_rating_list[i]);
+            current_table.push(sorted_rating_list[i]);
             if current_table.len() == 4 {
                 let max_rating = current_table
                     .iter()
@@ -40,8 +43,8 @@ pub fn make_interval_seating(
     }
 
     // Fill rest of tables with interval 1
-    for i in players_possible_to_seat_with_interval..current_rating_list.len() {
-        current_table.push(current_rating_list[i]);
+    for i in players_possible_to_seat_with_interval..sorted_rating_list.len() {
+        current_table.push(sorted_rating_list[i]);
         if current_table.len() == 4 {
             let max_rating = current_table
                 .iter()
@@ -74,6 +77,13 @@ mod tests {
     #[test]
     fn test_make_interval_seating_step1() {
         let players = vec![
+            (10, 1499),
+            (11, 1498),
+            (12, 1498),
+            (13, 1497),
+            (14, 1496),
+            (15, 1495),
+            (16, 1494),
             (1, 1508),
             (2, 1507),
             (3, 1506),
@@ -83,13 +93,6 @@ mod tests {
             (7, 1502),
             (8, 1501),
             (9, 1500),
-            (10, 1499),
-            (11, 1498),
-            (12, 1498),
-            (13, 1497),
-            (14, 1496),
-            (15, 1495),
-            (16, 1494),
         ];
 
         let seating = make_interval_seating(&players, 1, 12345);
@@ -120,14 +123,6 @@ mod tests {
     #[test]
     fn test_make_interval_seating_step2() {
         let players = vec![
-            (1, 1508),
-            (2, 1507),
-            (3, 1506),
-            (4, 1505),
-            (5, 1504),
-            (6, 1503),
-            (7, 1502),
-            (8, 1501),
             (9, 1500),
             (10, 1499),
             (11, 1498),
@@ -136,6 +131,14 @@ mod tests {
             (14, 1496),
             (15, 1495),
             (16, 1494),
+            (1, 1508),
+            (2, 1507),
+            (3, 1506),
+            (4, 1505),
+            (5, 1504),
+            (6, 1503),
+            (7, 1502),
+            (8, 1501),
         ];
 
         let seating = make_interval_seating(&players, 2, 12345);
@@ -166,6 +169,13 @@ mod tests {
     #[test]
     fn test_make_interval_seating_step3() {
         let players = vec![
+            (10, 1499),
+            (11, 1498),
+            (12, 1498),
+            (13, 1497),
+            (14, 1496),
+            (15, 1495),
+            (16, 1494),
             (1, 1508),
             (2, 1507),
             (3, 1506),
@@ -175,13 +185,6 @@ mod tests {
             (7, 1502),
             (8, 1501),
             (9, 1500),
-            (10, 1499),
-            (11, 1498),
-            (12, 1498),
-            (13, 1497),
-            (14, 1496),
-            (15, 1495),
-            (16, 1494),
         ];
 
         let seating = make_interval_seating(&players, 3, 12345);
@@ -212,13 +215,6 @@ mod tests {
     #[test]
     fn test_make_interval_seating_step4() {
         let players = vec![
-            (1, 1508),
-            (2, 1507),
-            (3, 1506),
-            (4, 1505),
-            (5, 1504),
-            (6, 1503),
-            (7, 1502),
             (8, 1501),
             (9, 1500),
             (10, 1499),
@@ -228,6 +224,13 @@ mod tests {
             (14, 1496),
             (15, 1495),
             (16, 1494),
+            (1, 1508),
+            (2, 1507),
+            (3, 1506),
+            (4, 1505),
+            (5, 1504),
+            (6, 1503),
+            (7, 1502),
         ];
 
         let seating = make_interval_seating(&players, 4, 12345);
