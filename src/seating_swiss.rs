@@ -1,7 +1,8 @@
-use crate::interfaces::PlayersMap;
+use crate::interfaces::{PlayersMap, WindShuffle};
 use crate::matrix::Matrix;
 use crate::minimap::Minimap;
 use crate::shuffle::update_places_to_random;
+use crate::wind_balance::update_places_at_each_table;
 
 /// Swiss seating entry point
 /// Wrapper for formats conformity
@@ -9,6 +10,7 @@ pub fn make_swiss_seating(
     players_map: &PlayersMap,
     previous_seatings: &Vec<Vec<u32>>,
     rand_factor: u64,
+    wind_shuffle: WindShuffle,
 ) -> PlayersMap {
     let ids: Vec<u32> = players_map.iter().map(|item| item.0).collect();
     let mut played_with = make_played_with_matrix(players_map, previous_seatings);
@@ -28,7 +30,13 @@ pub fn make_swiss_seating(
         .map(|item| (item.0, player_to_rating.get_value(item.0).unwrap()))
         .collect();
 
-    update_places_to_random(&result_table, rand_factor)
+    if wind_shuffle == WindShuffle::Random {
+        update_places_to_random(&result_table, rand_factor)
+    } else if wind_shuffle == WindShuffle::Balanced {
+        update_places_at_each_table(&result_table, previous_seatings)
+    } else {
+        result_table
+    }
 }
 
 /// Swiss seating generator
@@ -581,7 +589,7 @@ mod tests {
             vec![12, 3, 9, 15],
         ];
 
-        let seating = make_swiss_seating(&players, &previous_seatings, 12345);
+        let seating = make_swiss_seating(&players, &previous_seatings, 12345, WindShuffle::Random);
         let intersections = make_intersections_table(&seating, &previous_seatings);
 
         // Swiss seating should produce seating of 32 players in 8 games with no more than 2 intersections of each pair

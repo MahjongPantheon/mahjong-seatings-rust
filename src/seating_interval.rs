@@ -1,13 +1,16 @@
-use crate::interfaces::{PlayersMap, TableWithRating};
+use crate::interfaces::{PlayersMap, TableWithRating, WindShuffle};
 use crate::shuffle::update_places_to_random;
+use crate::wind_balance::update_places_at_each_table;
 
 /// Make interval seating
 /// Players from the top are seating with interval of $step, but if table count is
 /// not divisible by $step, rest of players are seated with step 1.
 pub fn make_interval_seating(
     current_rating_list: &PlayersMap,
+    previous_seatings: &Vec<Vec<u32>>,
     step: usize,
     rand_factor: u64,
+    wind_shuffle: WindShuffle,
 ) -> PlayersMap {
     let mut tables = Vec::new();
     let mut current_table = Vec::new();
@@ -67,7 +70,13 @@ pub fn make_interval_seating(
         flattened_groups.extend(table.players);
     }
 
-    update_places_to_random(&flattened_groups, rand_factor)
+    if wind_shuffle == WindShuffle::Random {
+        update_places_to_random(&flattened_groups, rand_factor)
+    } else if wind_shuffle == WindShuffle::Balanced {
+        update_places_at_each_table(&flattened_groups, previous_seatings)
+    } else {
+        flattened_groups
+    }
 }
 
 #[cfg(test)]
@@ -95,7 +104,7 @@ mod tests {
             (9, 1500),
         ];
 
-        let seating = make_interval_seating(&players, 1, 12345);
+        let seating = make_interval_seating(&players, &vec![], 1, 12345, WindShuffle::Random);
 
         assert_eq!(
             seating,
@@ -141,7 +150,7 @@ mod tests {
             (8, 1501),
         ];
 
-        let seating = make_interval_seating(&players, 2, 12345);
+        let seating = make_interval_seating(&players, &vec![], 2, 12345, WindShuffle::Random);
 
         assert_eq!(
             seating,
@@ -187,7 +196,7 @@ mod tests {
             (9, 1500),
         ];
 
-        let seating = make_interval_seating(&players, 3, 12345);
+        let seating = make_interval_seating(&players, &vec![], 3, 12345, WindShuffle::Random);
 
         assert_eq!(
             seating,
@@ -233,7 +242,7 @@ mod tests {
             (7, 1502),
         ];
 
-        let seating = make_interval_seating(&players, 4, 12345);
+        let seating = make_interval_seating(&players, &vec![], 4, 12345, WindShuffle::Random);
 
         assert_eq!(
             seating,
