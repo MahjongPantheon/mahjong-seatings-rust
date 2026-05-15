@@ -1,6 +1,6 @@
 use crate::interfaces::{PlayersMap, WindShuffle};
-use crate::shuffle::{shuffle, update_places_to_random};
-use crate::wind_balance::{calculate_intersection_factor, update_places_at_each_table};
+use crate::shuffle::{shuffle, update_wind_placing};
+use crate::wind_balance::calculate_intersection_factor;
 use lcg_rand::rand::LCG;
 
 /// Shuffled seating with random optimization
@@ -46,13 +46,7 @@ pub fn make_shuffled_seating(
         }
     }
 
-    if wind_shuffle == WindShuffle::Random {
-        update_places_to_random(&best_seating, rand_factor)
-    } else if wind_shuffle == WindShuffle::Balanced {
-        update_places_at_each_table(&best_seating, previous_seatings)
-    } else {
-        best_seating
-    }
+    update_wind_placing(wind_shuffle, &best_seating, previous_seatings, rand_factor)
 }
 
 #[cfg(test)]
@@ -81,18 +75,18 @@ mod tests {
         assert_eq!(
             seating,
             vec![
-                (2, 1500),
                 (8, 1500),
+                (2, 1500),
                 (4, 1500),
                 (10, 1500),
+                (6, 1500),
                 (1, 1500),
                 (7, 1500),
                 (3, 1500),
-                (6, 1500),
-                (5, 1500),
                 (12, 1500),
-                (9, 1500),
-                (11, 1500)
+                (11, 1500),
+                (5, 1500),
+                (9, 1500)
             ]
         );
     }
@@ -136,21 +130,21 @@ mod tests {
         assert_eq!(
             seating,
             vec![
-                (14, 1500),
                 (4, 1500),
-                (10, 1500),
                 (3, 1500),
-                (6, 1500),
-                (11, 1500),
+                (10, 1500),
+                (14, 1500),
                 (12, 1500),
+                (11, 1500),
                 (13, 1500),
+                (6, 1500),
+                (7, 1500),
                 (16, 1500),
                 (8, 1500),
                 (9, 1500),
-                (7, 1500),
-                (2, 1500),
                 (15, 1500),
                 (5, 1500),
+                (2, 1500),
                 (1, 1500)
             ]
         );
@@ -203,13 +197,13 @@ mod tests {
                 (12, 1500),
                 (8, 1500),
                 (1, 1500),
-                (10, 1500),
-                (9, 1500),
                 (14, 1500),
+                (9, 1500),
                 (6, 1500),
+                (10, 1500),
                 (16, 1500),
-                (4, 1500),
                 (13, 1500),
+                (4, 1500),
                 (2, 1500),
                 (7, 1500),
                 (3, 1500),
@@ -258,22 +252,22 @@ mod tests {
         assert_eq!(
             seating,
             vec![
-                (6, 1503),
+                (2, 1507),
                 (3, 1506),
                 (5, 1504),
-                (2, 1507),
+                (6, 1503),
+                (7, 1502),
                 (8, 1501),
                 (4, 1505),
                 (1, 1508),
-                (7, 1502),
                 (14, 1496),
-                (11, 1498),
                 (13, 1497),
                 (9, 1500),
+                (11, 1498),
                 (16, 1494),
-                (15, 1495),
                 (12, 1498),
-                (10, 1499)
+                (10, 1499),
+                (15, 1495)
             ]
         );
     }

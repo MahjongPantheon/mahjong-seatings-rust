@@ -1,8 +1,7 @@
 use crate::interfaces::{PlayersMap, WindShuffle};
 use crate::matrix::Matrix;
 use crate::minimap::Minimap;
-use crate::shuffle::update_places_to_random;
-use crate::wind_balance::update_places_at_each_table;
+use crate::shuffle::update_wind_placing;
 
 /// Swiss seating entry point
 /// Wrapper for formats conformity
@@ -30,13 +29,7 @@ pub fn make_swiss_seating(
         .map(|item| (item.0, player_to_rating.get_value(item.0).unwrap()))
         .collect();
 
-    if wind_shuffle == WindShuffle::Random {
-        update_places_to_random(&result_table, rand_factor)
-    } else if wind_shuffle == WindShuffle::Balanced {
-        update_places_at_each_table(&result_table, previous_seatings)
-    } else {
-        result_table
-    }
+    update_wind_placing(wind_shuffle, &result_table, previous_seatings, rand_factor)
 }
 
 /// Swiss seating generator

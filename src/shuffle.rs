@@ -1,5 +1,20 @@
-use crate::interfaces::PlayersMap;
+use crate::{interfaces::PlayersMap, wind_balance::update_places_at_each_table, WindShuffle};
 use lcg_rand::rand::LCG;
+
+pub fn update_wind_placing(
+    wind_shuffle: WindShuffle,
+    seating: &PlayersMap,
+    previous_seatings: &Vec<Vec<u32>>,
+    rand_factor: u64,
+) -> PlayersMap {
+    if wind_shuffle == WindShuffle::Random {
+        update_places_to_random(seating, rand_factor)
+    } else if wind_shuffle == WindShuffle::Balanced {
+        update_places_at_each_table(seating, previous_seatings, rand_factor)
+    } else {
+        seating.to_vec()
+    }
+}
 
 /// Make sure players will sit on random winds
 pub fn update_places_to_random(seating: &PlayersMap, rand_factor: u64) -> PlayersMap {
@@ -21,7 +36,7 @@ pub fn update_places_to_random(seating: &PlayersMap, rand_factor: u64) -> Player
 
 /// Shuffle array while maintaining its keys
 /// Should rely on seeded RNG
-pub fn shuffle(array: &[(u32, i32)], random: &mut LCG) -> Vec<(u32, i32)> {
+pub fn shuffle<T: Clone>(array: &[T], random: &mut LCG) -> Vec<T> {
     let mut result = array.to_vec();
     let mut i = result.len();
 
