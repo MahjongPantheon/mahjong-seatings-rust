@@ -1,6 +1,5 @@
 use crate::interfaces::{PlayersMap, TableWithRating, WindShuffle};
-use crate::shuffle::update_places_to_random;
-use crate::wind_balance::update_places_at_each_table;
+use crate::shuffle::update_wind_placing;
 
 /// Make interval seating
 /// Players from the top are seating with interval of $step, but if table count is
@@ -70,13 +69,12 @@ pub fn make_interval_seating(
         flattened_groups.extend(table.players);
     }
 
-    if wind_shuffle == WindShuffle::Random {
-        update_places_to_random(&flattened_groups, rand_factor)
-    } else if wind_shuffle == WindShuffle::Balanced {
-        update_places_at_each_table(&flattened_groups, previous_seatings)
-    } else {
-        flattened_groups
-    }
+    update_wind_placing(
+        wind_shuffle,
+        &flattened_groups,
+        previous_seatings,
+        rand_factor,
+    )
 }
 
 #[cfg(test)]

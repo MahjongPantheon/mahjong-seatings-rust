@@ -1,4 +1,6 @@
-use crate::PlayersMap;
+use lcg_rand::rand::LCG;
+
+use crate::{shuffle::shuffle, PlayersMap};
 
 const POSSIBLE_PLACEMENTS: [(u8, u8, u8, u8); 24] = [
     (0u8, 1u8, 2u8, 3u8),
@@ -32,7 +34,9 @@ const POSSIBLE_PLACEMENTS: [(u8, u8, u8, u8); 24] = [
 pub fn update_places_at_each_table(
     seating: &PlayersMap,
     previous_seatings: &Vec<Vec<u32>>,
+    rand_factor: u64,
 ) -> PlayersMap {
+    let mut random: LCG = LCG::from_seed(rand_factor);
     let mut tables = Vec::new();
     for chunk in seating.chunks(4) {
         tables.push(chunk.to_vec());
@@ -42,8 +46,10 @@ pub fn update_places_at_each_table(
     for table in tables {
         let mut best_result = 10005000;
         let mut best_placement = Vec::new();
+        // if some variants are equal, choose random
+        let possible_placements_rnd = shuffle(&POSSIBLE_PLACEMENTS, &mut random);
 
-        for placement in &POSSIBLE_PLACEMENTS {
+        for placement in &possible_placements_rnd {
             let new_result = calc_sub_sums(
                 table[placement.0 as usize].0,
                 table[placement.1 as usize].0,
@@ -153,12 +159,13 @@ fn calc_sub_sums(
             }
         }
 
-        total_sum += buckets[0].abs_diff(buckets[1])
-            + buckets[0].abs_diff(buckets[2])
-            + buckets[0].abs_diff(buckets[3])
-            + buckets[1].abs_diff(buckets[2])
-            + buckets[1].abs_diff(buckets[3])
-            + buckets[2].abs_diff(buckets[3]);
+        // square the numbers to force buckets to be closer to each other
+        total_sum += buckets[0].abs_diff(buckets[1]).pow(2)
+            + buckets[0].abs_diff(buckets[2]).pow(2)
+            + buckets[0].abs_diff(buckets[3]).pow(2)
+            + buckets[1].abs_diff(buckets[2]).pow(2)
+            + buckets[1].abs_diff(buckets[3]).pow(2)
+            + buckets[2].abs_diff(buckets[3]).pow(2);
     }
 
     total_sum
@@ -173,7 +180,7 @@ mod tests {
         let prev_seating: Vec<Vec<u32>> =
             vec![vec![1, 2, 3, 4], vec![4, 1, 2, 3], vec![3, 4, 1, 2]];
 
-        assert_eq!(calc_sub_sums(1, 2, 3, 4, &prev_seating), 24);
+        assert_eq!(calc_sub_sums(1, 2, 3, 4, &prev_seating), 32);
     }
 
     #[test]
@@ -184,7 +191,7 @@ mod tests {
             vec![vec![1, 2, 3, 4], vec![4, 1, 2, 3], vec![3, 4, 1, 2]];
 
         assert_eq!(
-            update_places_at_each_table(&players, &previous_seating),
+            update_places_at_each_table(&players, &previous_seating, 234567),
             vec![(2, 1500), (3, 1500), (4, 1500), (1, 1500)]
         )
     }
