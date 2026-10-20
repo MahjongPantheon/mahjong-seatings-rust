@@ -1,7 +1,7 @@
 use crate::interfaces::{PlayersMap, WindShuffle};
 use crate::matrix::Matrix;
 use crate::minimap::Minimap;
-use crate::shuffle::update_wind_placing;
+use crate::shuffle::update_wind_placing_with_table_size;
 
 /// Swiss seating entry point
 /// Wrapper for formats conformity
@@ -11,13 +11,38 @@ pub fn make_swiss_seating(
     rand_factor: u64,
     wind_shuffle: WindShuffle,
 ) -> PlayersMap {
+    make_swiss_seating_with_table_size(players_map, previous_seatings, rand_factor, wind_shuffle, 4)
+}
+
+/// Swiss seating with three or four real players per table.
+pub fn make_swiss_seating_with_table_size(
+    players_map: &PlayersMap,
+    previous_seatings: &Vec<Vec<u32>>,
+    rand_factor: u64,
+    wind_shuffle: WindShuffle,
+    table_size: usize,
+) -> PlayersMap {
+    assert!(
+        table_size == 3 || table_size == 4,
+        "Table size must be 3 or 4"
+    );
+    assert!(players_map.len() % table_size == 0, "Incomplete table");
+    assert!(
+        previous_seatings
+            .iter()
+            .all(|table| table.len() == table_size),
+        "Invalid previous table size"
+    );
+    if players_map.is_empty() {
+        return Vec::new();
+    }
     let ids: Vec<u32> = players_map.iter().map(|item| item.0).collect();
     let mut played_with = make_played_with_matrix(players_map, previous_seatings);
     let mut player_to_rating: Minimap<i32> = Minimap::new(ids.len());
     players_map.iter().for_each(|item| {
         player_to_rating.set_value(item.0, item.1);
     });
-    let player_table = swiss_seating_original(&players_map, &ids, &mut played_with);
+    let player_table = swiss_seating_original(&players_map, &ids, &mut played_with, table_size);
 
     let mut result_table: Vec<(u32, i32)> = Vec::new();
     for i in ids {
@@ -29,7 +54,13 @@ pub fn make_swiss_seating(
         .map(|item| (item.0, player_to_rating.get_value(item.0).unwrap()))
         .collect();
 
-    update_wind_placing(wind_shuffle, &result_table, previous_seatings, rand_factor)
+    update_wind_placing_with_table_size(
+        wind_shuffle,
+        &result_table,
+        previous_seatings,
+        rand_factor,
+        table_size,
+    )
 }
 
 /// Swiss seating generator
@@ -39,6 +70,7 @@ fn swiss_seating_original(
     players_ratings: &PlayersMap,
     ids: &Vec<u32>,
     played_with: &mut Matrix<u32>,
+    table_size: usize,
 ) -> Minimap<i32> {
     let mut player_table = Minimap::new(ids.len());
     let mut is_playing = Minimap::new(ids.len());
@@ -61,6 +93,7 @@ fn swiss_seating_original(
         &mut player_table,
         played_with,
         &mut iteration,
+        table_size,
     ) {
         max_crossings += 1;
     }
@@ -79,6 +112,7 @@ fn swiss_seating_internal(
     player_table: &mut Minimap<i32>,
     played_with: &mut Matrix<u32>,
     iteration: &mut u32,
+    table_size: usize,
 ) -> bool {
     *iteration += 1;
     if *iteration > 15000 {
@@ -95,8 +129,8 @@ fn swiss_seating_internal(
 
     // if table is already filled, take next table and place there a player with highest rating
 
-    if players_on_max_table.len() == 0 || players_on_max_table.len() == 4 {
-        if players_on_max_table.len() == 4 {
+    if players_on_max_table.len() == 0 || players_on_max_table.len() == table_size {
+        if players_on_max_table.len() == table_size {
             max_table += 1;
         }
 
@@ -116,6 +150,7 @@ fn swiss_seating_internal(
             player_table,
             played_with,
             iteration,
+            table_size,
         ) {
             true
         } else {
@@ -177,6 +212,7 @@ fn swiss_seating_internal(
                 player_table,
                 played_with,
                 iteration,
+                table_size,
             ) {
                 return true;
             } else {
@@ -205,8 +241,8 @@ fn make_played_with_matrix(
 
     // Count previous games played together
     for table in previous_seatings {
-        for i in 0..4 {
-            for j in 0..4 {
+        for i in 0..table.len() {
+            for j in 0..table.len() {
                 if i >= j {
                     continue;
                 }
