@@ -171,6 +171,95 @@ fn calc_sub_sums(
     total_sum
 }
 
+/// Three-player wind balancing considers only East, South and West.
+pub fn update_places_at_three_player_tables(
+    seating: &PlayersMap,
+    previous_seatings: &Vec<Vec<u32>>,
+    rand_factor: u64,
+) -> PlayersMap {
+    let mut random = LCG::from_seed(rand_factor);
+    let permutations = [
+        [0, 1, 2],
+        [0, 2, 1],
+        [1, 0, 2],
+        [1, 2, 0],
+        [2, 0, 1],
+        [2, 1, 0],
+    ];
+    let mut result = Vec::new();
+    for table in seating.chunks(3) {
+        let candidates = shuffle(&permutations, &mut random);
+        let best = candidates
+            .iter()
+            .min_by_key(|permutation| {
+                permutation
+                    .iter()
+                    .enumerate()
+                    .map(|(wind, &index)| {
+                        let mut counts = [0u32; 3];
+                        counts[wind] += 1;
+                        for previous in previous_seatings {
+                            if let Some(seat) = previous.iter().position(|&id| id == table[index].0)
+                            {
+                                counts[seat] += 1;
+                            }
+                        }
+                        counts[0].abs_diff(counts[1]).pow(2)
+                            + counts[0].abs_diff(counts[2]).pow(2)
+                            + counts[1].abs_diff(counts[2]).pow(2)
+                    })
+                    .sum::<u32>()
+            })
+            .unwrap();
+        result.extend(best.iter().map(|&index| table[index]));
+    }
+    result
+}
+
+/// Preserve the four-player optimizer while counting sanma opponents by player ID.
+pub fn calculate_intersection_factor_with_table_size(
+    seating: &PlayersMap,
+    previous_seatings: &Vec<Vec<u32>>,
+    table_size: usize,
+) -> i32 {
+    if table_size == 4 {
+        return calculate_intersection_factor(seating, previous_seatings);
+    }
+    use std::collections::HashMap;
+    let tables_count = (seating.len() / table_size).max(1);
+    let mut meetings: HashMap<(u32, u32), Vec<usize>> = HashMap::new();
+    let current: Vec<Vec<u32>> = seating
+        .chunks(table_size)
+        .map(|table| table.iter().map(|&(id, _)| id).collect())
+        .collect();
+    let mut games: Vec<Vec<Vec<u32>>> = previous_seatings
+        .chunks(tables_count)
+        .map(|tables| tables.to_vec())
+        .collect();
+    games.push(current);
+    for (game_index, tables) in games.iter().enumerate() {
+        for table in tables {
+            for i in 0..table.len() {
+                for j in i + 1..table.len() {
+                    let pair = (table[i].min(table[j]), table[i].max(table[j]));
+                    meetings.entry(pair).or_default().push(game_index);
+                }
+            }
+        }
+    }
+    meetings
+        .values()
+        .filter(|games| games.len() > 1)
+        .map(|games| {
+            1 + 10
+                * games
+                    .windows(2)
+                    .filter(|pair| pair[1] - pair[0] == 1)
+                    .count() as i32
+        })
+        .sum()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

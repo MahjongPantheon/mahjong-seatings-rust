@@ -7,31 +7,52 @@ pub fn update_wind_placing(
     previous_seatings: &Vec<Vec<u32>>,
     rand_factor: u64,
 ) -> PlayersMap {
+    update_wind_placing_with_table_size(wind_shuffle, seating, previous_seatings, rand_factor, 4)
+}
+
+/// Update winds for complete three- or four-player tables.
+pub fn update_wind_placing_with_table_size(
+    wind_shuffle: WindShuffle,
+    seating: &PlayersMap,
+    previous_seatings: &Vec<Vec<u32>>,
+    rand_factor: u64,
+    table_size: usize,
+) -> PlayersMap {
+    assert!(
+        table_size == 3 || table_size == 4,
+        "Table size must be 3 or 4"
+    );
+    assert!(seating.len() % table_size == 0, "Incomplete table");
+    assert!(
+        previous_seatings
+            .iter()
+            .all(|table| table.len() == table_size),
+        "Invalid previous table size"
+    );
     if wind_shuffle == WindShuffle::Random {
-        update_places_to_random(seating, rand_factor)
+        let mut random = LCG::from_seed(rand_factor);
+        seating
+            .chunks(table_size)
+            .flat_map(|table| shuffle(table, &mut random))
+            .collect()
     } else if wind_shuffle == WindShuffle::Balanced {
-        update_places_at_each_table(seating, previous_seatings, rand_factor)
+        if table_size == 4 {
+            update_places_at_each_table(seating, previous_seatings, rand_factor)
+        } else {
+            crate::wind_balance::update_places_at_three_player_tables(
+                seating,
+                previous_seatings,
+                rand_factor,
+            )
+        }
     } else {
         seating.to_vec()
     }
 }
 
-/// Make sure players will sit on random winds
+/// Make sure players will sit on random winds.
 pub fn update_places_to_random(seating: &PlayersMap, rand_factor: u64) -> PlayersMap {
-    let mut tables = Vec::new();
-    for chunk in seating.chunks(4) {
-        tables.push(chunk.to_vec());
-    }
-
-    let mut result_seating = Vec::new();
-
-    let mut random: LCG = LCG::from_seed(rand_factor);
-
-    for table in tables {
-        result_seating.extend(shuffle(&table, &mut random));
-    }
-
-    result_seating
+    update_wind_placing(WindShuffle::Random, seating, &vec![], rand_factor)
 }
 
 /// Shuffle array while maintaining its keys

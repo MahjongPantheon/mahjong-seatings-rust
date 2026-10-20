@@ -1,6 +1,6 @@
 use crate::interfaces::{PlayersMap, WindShuffle};
-use crate::shuffle::{shuffle, update_wind_placing};
-use crate::wind_balance::calculate_intersection_factor;
+use crate::shuffle::{shuffle, update_wind_placing_with_table_size};
+use crate::wind_balance::calculate_intersection_factor_with_table_size;
 use lcg_rand::rand::LCG;
 
 /// Shuffled seating with random optimization
@@ -12,6 +12,37 @@ pub fn make_shuffled_seating(
     rand_factor: u64,
     wind_shuffle: WindShuffle,
 ) -> PlayersMap {
+    make_shuffled_seating_with_table_size(
+        players_map,
+        previous_seatings,
+        groups_count,
+        rand_factor,
+        wind_shuffle,
+        4,
+    )
+}
+
+/// Shuffled seating for three- or four-player tables. The ghost seat is never an input.
+pub fn make_shuffled_seating_with_table_size(
+    players_map: &PlayersMap,
+    previous_seatings: &Vec<Vec<u32>>,
+    groups_count: u32,
+    rand_factor: u64,
+    wind_shuffle: WindShuffle,
+    table_size: usize,
+) -> PlayersMap {
+    assert!(
+        table_size == 3 || table_size == 4,
+        "Table size must be 3 or 4"
+    );
+    assert!(players_map.len() % table_size == 0, "Incomplete table");
+    assert!(groups_count > 0, "Groups count must be positive");
+    assert!(
+        previous_seatings
+            .iter()
+            .all(|table| table.len() == table_size),
+        "Invalid previous table size"
+    );
     const MAX_ITERATIONS: usize = 1000;
     let mut best_seating = Vec::new();
     let mut factor = 100500; // lower is better, so init with very big number
@@ -39,14 +70,24 @@ pub fn make_shuffled_seating(
         // Flatten groups
         let flattened_groups: PlayersMap = groups.iter().flatten().copied().collect();
 
-        let new_factor = calculate_intersection_factor(&flattened_groups, previous_seatings);
+        let new_factor = calculate_intersection_factor_with_table_size(
+            &flattened_groups,
+            previous_seatings,
+            table_size,
+        );
         if new_factor < factor {
             factor = new_factor;
             best_seating = flattened_groups;
         }
     }
 
-    update_wind_placing(wind_shuffle, &best_seating, previous_seatings, rand_factor)
+    update_wind_placing_with_table_size(
+        wind_shuffle,
+        &best_seating,
+        previous_seatings,
+        rand_factor,
+        table_size,
+    )
 }
 
 #[cfg(test)]

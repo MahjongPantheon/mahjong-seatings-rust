@@ -1,5 +1,5 @@
 use crate::interfaces::{PlayersMap, TableWithRating, WindShuffle};
-use crate::shuffle::update_wind_placing;
+use crate::shuffle::update_wind_placing_with_table_size;
 
 /// Make interval seating
 /// Players from the top are seating with interval of $step, but if table count is
@@ -11,11 +11,46 @@ pub fn make_interval_seating(
     rand_factor: u64,
     wind_shuffle: WindShuffle,
 ) -> PlayersMap {
+    make_interval_seating_with_table_size(
+        current_rating_list,
+        previous_seatings,
+        step,
+        rand_factor,
+        wind_shuffle,
+        4,
+    )
+}
+
+/// Interval seating with three or four real players per table.
+pub fn make_interval_seating_with_table_size(
+    current_rating_list: &PlayersMap,
+    previous_seatings: &Vec<Vec<u32>>,
+    step: usize,
+    rand_factor: u64,
+    wind_shuffle: WindShuffle,
+    table_size: usize,
+) -> PlayersMap {
+    assert!(
+        table_size == 3 || table_size == 4,
+        "Table size must be 3 or 4"
+    );
+    assert!(
+        current_rating_list.len() % table_size == 0,
+        "Incomplete table"
+    );
+    assert!(
+        previous_seatings
+            .iter()
+            .all(|table| table.len() == table_size),
+        "Invalid previous table size"
+    );
+    assert!(step > 0, "Interval step must be positive");
     let mut tables = Vec::new();
     let mut current_table = Vec::new();
 
     // These guys from bottom could not be placed with desired interval, so they play with interval 1
-    let players_to_seat_with_no_interval = 4 * ((current_rating_list.len() / 4) % step);
+    let players_to_seat_with_no_interval =
+        table_size * ((current_rating_list.len() / table_size) % step);
     // These guys from top should be placed as required
     let players_possible_to_seat_with_interval =
         current_rating_list.len() - players_to_seat_with_no_interval;
@@ -28,7 +63,7 @@ pub fn make_interval_seating(
         let mut i = offset;
         while i < players_possible_to_seat_with_interval {
             current_table.push(sorted_rating_list[i]);
-            if current_table.len() == 4 {
+            if current_table.len() == table_size {
                 let max_rating = current_table
                     .iter()
                     .map(|(_, rating)| *rating)
@@ -47,7 +82,7 @@ pub fn make_interval_seating(
     // Fill rest of tables with interval 1
     for i in players_possible_to_seat_with_interval..sorted_rating_list.len() {
         current_table.push(sorted_rating_list[i]);
-        if current_table.len() == 4 {
+        if current_table.len() == table_size {
             let max_rating = current_table
                 .iter()
                 .map(|(_, rating)| *rating)
@@ -69,11 +104,12 @@ pub fn make_interval_seating(
         flattened_groups.extend(table.players);
     }
 
-    update_wind_placing(
+    update_wind_placing_with_table_size(
         wind_shuffle,
         &flattened_groups,
         previous_seatings,
         rand_factor,
+        table_size,
     )
 }
 
